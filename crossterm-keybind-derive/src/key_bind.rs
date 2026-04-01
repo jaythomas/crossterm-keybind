@@ -119,9 +119,9 @@ impl Events {
         #[cfg(feature = "safety")]
         let safety_check_match_impl = quote! {
             if !BINDING_INIT.load(std::sync::atomic::Ordering::Acquire) {
-                // NOTE 
+                // NOTE
                 // You are using crossterm in an unexpected way, we prevent UB but not panic
-                // in runtime, please run anyfunction after `init_and_load`
+                // in runtime, please run anyfunction after `init_and_load`/`init_and_load_file`
                 // https://docs.rs/crossterm-keybind/latest/crossterm_keybind/trait.KeyBindTrait.html#tymethod.init_and_load
                 crossterm_keybind::log::warn!("Keybindings are used without initialization, it will never match");
                 return false;
@@ -133,9 +133,9 @@ impl Events {
         #[cfg(feature = "safety")]
         let safety_check_dispatch_impl = quote! {
             if !BINDING_INIT.load(std::sync::atomic::Ordering::Acquire) {
-                // NOTE 
+                // NOTE
                 // You are using crossterm in an unexpected way, we prevent UB but not panic
-                // in runtime, please run anyfunction after `init_and_load`
+                // in runtime, please run anyfunction after `init_and_load`/`init_and_load_file`
                 // https://docs.rs/crossterm-keybind/latest/crossterm_keybind/trait.KeyBindTrait.html#tymethod.init_and_load
                 crossterm_keybind::log::warn!("Keybindings are used without initialization, it will never match");
                 return Vec::new();
@@ -147,9 +147,9 @@ impl Events {
         #[cfg(feature = "safety")]
         let safety_check_display_impl = quote! {
             if !BINDING_INIT.load(std::sync::atomic::Ordering::Acquire) {
-                // NOTE 
+                // NOTE
                 // You are using crossterm in an unexpected way, we prevent UB but not panic
-                // in runtime, please run anyfunction after `init_and_load`
+                // in runtime, please run anyfunction after `init_and_load`/`init_and_load_file`
                 // https://docs.rs/crossterm-keybind/latest/crossterm_keybind/trait.KeyBindTrait.html#tymethod.init_and_load
                 crossterm_keybind::log::warn!("Keybindings are not initialized");
                 return String::new();
@@ -186,7 +186,7 @@ impl Events {
             )*
 
             impl crossterm_keybind::KeyBindTrait for #name {
-                fn init_and_load(patch_path: Option<std::path::PathBuf>) -> Result<(), crossterm_keybind::Error>{
+                fn init_and_load_file(patch_path: Option<std::path::PathBuf>) -> Result<(), crossterm_keybind::Error>{
                     #safety_check_init_impl
                     let mut key_config: DefaultBinding =
                         toml::from_str(&DefaultBinding::toml_example()).map_err(|e|crossterm_keybind::Error::DefaultConfigError(e.to_string()))?;
@@ -194,6 +194,27 @@ impl Events {
                         let contents = std::fs::read_to_string(p).map_err(crossterm_keybind::Error::ReadConfigError)?;
                         let patch: KeyBinding =
                             toml::from_str(&contents).map_err(|e|crossterm_keybind::Error::LoadConfigError(e.to_string()))?;
+                        key_config.apply(patch);
+                    }
+
+                    unsafe {
+                        #(
+                            #uppers = core::mem::MaybeUninit::new(key_config.#lowers);
+                        )*
+                    }
+
+                    Ok(())
+                }
+
+                fn init_and_load<T: crossterm_keybind::serde::Serialize>(patch_table: Option<T>) -> Result<(), crossterm_keybind::Error> {
+                    #safety_check_init_impl
+                    let mut key_config: DefaultBinding =
+                        toml::from_str(&DefaultBinding::toml_example()).map_err(|e| crossterm_keybind::Error::DefaultConfigError(e.to_string()))?;
+                    if let Some(table) = patch_table {
+                        let contents = toml::to_string(&table)
+                            .map_err(|e| crossterm_keybind::Error::LoadConfigError(e.to_string()))?;
+                        let patch: KeyBinding =
+                            toml::from_str(&contents).map_err(|e| crossterm_keybind::Error::LoadConfigError(e.to_string()))?;
                         key_config.apply(patch);
                     }
 

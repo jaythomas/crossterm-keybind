@@ -19,7 +19,7 @@ pub enum KeyEvent {
 fn main() -> Result<(), Box<dyn std::error::Error>> {
     // Init keybind config from a file path,
     // The file can be customized from `"{}", KeyEvent::config_example()`
-    KeyEvent::init_and_load(None)?;
+    KeyEvent::init_and_load_file(None)?;
 
     //  Following code will somewhere in your event handler
     //  ```rust
