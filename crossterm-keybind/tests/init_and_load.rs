@@ -3,9 +3,9 @@ use crossterm_keybind::{DisplayFormat, KeyBind, KeyBindTrait};
 // Each test uses a distinct enum type so the per-type BINDING_INIT static doesn't conflict
 // between tests (each derived type gets its own static via the macro expansion).
 
-/// Calling init_from_table(None) should succeed and apply the attribute-defined defaults.
+/// Calling init_and_load(None) should succeed and apply the attribute-defined defaults.
 #[test]
-fn init_from_table_none_applies_defaults() {
+fn init_and_load_none_applies_defaults() {
     #[derive(KeyBind)]
     enum TestKeyBindings {
         #[keybindings["q", "Esc"]]
@@ -14,8 +14,8 @@ fn init_from_table_none_applies_defaults() {
         Next,
     }
 
-    TestKeyBindings::init_from_table::<toml::Table>(None)
-        .expect("init_from_table(None) should succeed");
+    TestKeyBindings::init_and_load::<toml::Table>(None)
+        .expect("init_and_load(None) should succeed");
 
     let example = TestKeyBindings::toml_example();
     let quit_bindings =
@@ -38,9 +38,9 @@ fn init_from_table_none_applies_defaults() {
     assert!(next_bindings.contains("Down"), "\"Down\" key was bound");
 }
 
-/// Calling init_from_table(Some(table)) should patch the defaults with the provided table.
+/// Calling init_and_load(Some(table)) should patch the defaults with the provided table.
 #[test]
-fn init_from_table_some_patches_defaults() {
+fn init_and_load_some_patches_defaults() {
     #[derive(KeyBind)]
     enum TestKeyBindings {
         #[keybindings["q", "Esc"]]
@@ -54,8 +54,8 @@ fn init_from_table_some_patches_defaults() {
         toml::Value::Array(vec![toml::Value::String("x".to_string())]),
     );
 
-    TestKeyBindings::init_from_table(Some(table))
-        .expect("init_from_table(Some(table)) should succeed");
+    TestKeyBindings::init_and_load(Some(table))
+        .expect("init_and_load(Some(table)) should succeed");
 
     // The display for Quit should reflect the patched "x" binding
     let bindings = TestKeyBindings::Quit.key_bindings_display_with_format(&DisplayFormat::Full);
@@ -73,9 +73,9 @@ fn init_from_table_some_patches_defaults() {
     );
 }
 
-/// Calling init_from_table with an invalid keybind string should return LoadConfigError.
+/// Calling init_and_load with an invalid keybind string should return LoadConfigError.
 #[test]
-fn init_from_table_invalid_keybind_returns_error() {
+fn init_and_load_invalid_keybind_returns_error() {
     #[derive(KeyBind)]
     enum TestKeyBindings {
         #[keybindings["q"]]
@@ -88,27 +88,27 @@ fn init_from_table_invalid_keybind_returns_error() {
         toml::Value::Array(vec![toml::Value::String("NotARealKey".to_string())]),
     );
 
-    let result = TestKeyBindings::init_from_table(Some(table));
+    let result = TestKeyBindings::init_and_load(Some(table));
     assert!(
         matches!(result, Err(crossterm_keybind::Error::LoadConfigError(_))),
         "expected LoadConfigError for invalid keybind, got: {result:?}"
     );
 }
 
-/// init_from_table and init_and_load both set the same init guard — calling one then the
+/// init_and_load and init_and_load_file both set the same init guard — calling one then the
 /// other on the same type should return ConfigDoubleInitError (safety feature only).
 #[test]
 #[cfg(feature = "safety")]
-fn init_from_table_prevents_double_init() {
+fn init_and_load_prevents_double_init() {
     #[derive(KeyBind)]
     enum TestKeyBindings {
         #[keybindings["q"]]
         Quit,
     }
 
-    TestKeyBindings::init_from_table::<toml::Table>(None).expect("first init should succeed");
+    TestKeyBindings::init_and_load::<toml::Table>(None).expect("first init should succeed");
 
-    let second = TestKeyBindings::init_and_load(None);
+    let second = TestKeyBindings::init_and_load_file(None);
     assert!(
         matches!(second, Err(crossterm_keybind::Error::ConfigDoubleInitError)),
         "expected ConfigDoubleInitError on second init, got: {second:?}"

@@ -62,7 +62,7 @@ for event in KeyBindEvent::dispatch(&key) {
 ### How to provide the default config
 
 You can easily provide a key bind config **with documentation** by `KeyEvent::toml_example()` or
-`KeyEvent::to_toml_example(path)` as following.  We also take care the config file documentation
+`KeyEvent::to_toml_example(path)` as following. We also take care the config file documentation
 
 ```toml
 # The app will be closed with following key bindings
@@ -81,32 +81,34 @@ Before dispatching key events, you must initialize the keybindings once at start
 This loads the default bindings defined in your enum's `#[keybindings[...]]` attributes,
 and optionally patches them with a user-supplied config.
 
-**`init_and_load`** — use this when keybindings live in a dedicated config file managed
-by this crate:
-
-```rust
-// No user config — use built-in defaults only
-KeyEvent::init_and_load(None)?;
-
-// Load defaults, then patch from a user-supplied keybind config file
-KeyEvent::init_and_load(Some(PathBuf::from("~/.config/myapp/keybinds.toml")))?;
-```
-
-**`init_from_table`** — use this when your application already manages its own config
+**`init_and_load`** — Use this when your application already manages its own config
 file (e.g. using an alternative storage backend) and you just want to take advantage
 of the macros and configuration merging.
 
 ```rust
-// Parse your own config file, let's pretend there's a [keybinds] section in it
-let config: toml::Table = toml::from_str(&std::fs::read_to_string("config.toml")?)?;
-
-// Extract the [keybinds] section (if present) and pass it directly
-let keybinds_table = config.get("keybinds").and_then(|v| v.as_table()).cloned();
-KeyEvent::init_from_table(keybinds_table)?;
+// No user config. Use your application's defaults only.
+KeyEvent::init_and_load(None);
 ```
 
-Both methods apply the same patching logic: only the keys present in the user config
-override defaults; everything else falls back to the values declared in the enum.
+```rust
+// Parse your own config file. Let's pretend there's a [keybinds] section in it.
+let config: toml::Table = toml::from_str(&std::fs::read_to_string("config.toml")?)?;
+
+// Extract the [keybinds] section (if present) and pass it directly.
+let keybinds_table = config.get("keybinds").and_then(|v| v.as_table()).cloned();
+KeyEvent::init_and_load(keybinds_table);
+```
+
+**`init_and_load_file`** — Use this when keybindings live in a dedicated config file
+that you want to load files directly from. This crate will manage reading the file:
+
+```rust
+// Load defaults, then patch with keybinds from a config file.
+KeyEvent::init_and_load_file(Some(PathBuf::from("~/.config/myapp/keybinds.toml")));
+```
+
+Both methods apply the same patching logic; Only the keys present in the user config
+override defaults. Everything else falls back to the values declared in the enum.
 
 ### How users can customize their keybinds
 
