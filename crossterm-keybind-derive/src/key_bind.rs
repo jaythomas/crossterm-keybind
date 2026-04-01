@@ -119,10 +119,10 @@ impl Events {
         #[cfg(feature = "safety")]
         let safety_check_match_impl = quote! {
             if !BINDING_INIT.load(std::sync::atomic::Ordering::Acquire) {
-                // NOTE 
+                // NOTE
                 // You are using crossterm in an unexpected way, we prevent UB but not panic
-                // in runtime, please run anyfunction after `init_and_load_file`
-                // https://docs.rs/crossterm-keybind/latest/crossterm_keybind/trait.KeyBindTrait.html#tymethod.init_and_load_file
+                // in runtime, please run anyfunction after `init_and_load`/`init_and_load_file`
+                // https://docs.rs/crossterm-keybind/latest/crossterm_keybind/trait.KeyBindTrait.html#tymethod.init_and_load
                 crossterm_keybind::log::warn!("Keybindings are used without initialization, it will never match");
                 return false;
             }
@@ -133,10 +133,10 @@ impl Events {
         #[cfg(feature = "safety")]
         let safety_check_dispatch_impl = quote! {
             if !BINDING_INIT.load(std::sync::atomic::Ordering::Acquire) {
-                // NOTE 
+                // NOTE
                 // You are using crossterm in an unexpected way, we prevent UB but not panic
-                // in runtime, please run anyfunction after `init_and_load_file`
-                // https://docs.rs/crossterm-keybind/latest/crossterm_keybind/trait.KeyBindTrait.html#tymethod.init_and_load_file
+                // in runtime, please run anyfunction after `init_and_load`/`init_and_load_file`
+                // https://docs.rs/crossterm-keybind/latest/crossterm_keybind/trait.KeyBindTrait.html#tymethod.init_and_load
                 crossterm_keybind::log::warn!("Keybindings are used without initialization, it will never match");
                 return Vec::new();
             }
@@ -147,10 +147,10 @@ impl Events {
         #[cfg(feature = "safety")]
         let safety_check_display_impl = quote! {
             if !BINDING_INIT.load(std::sync::atomic::Ordering::Acquire) {
-                // NOTE 
+                // NOTE
                 // You are using crossterm in an unexpected way, we prevent UB but not panic
-                // in runtime, please run anyfunction after `init_and_load_file`
-                // https://docs.rs/crossterm-keybind/latest/crossterm_keybind/trait.KeyBindTrait.html#tymethod.init_and_load_file
+                // in runtime, please run anyfunction after `init_and_load`/`init_and_load_file`
+                // https://docs.rs/crossterm-keybind/latest/crossterm_keybind/trait.KeyBindTrait.html#tymethod.init_and_load
                 crossterm_keybind::log::warn!("Keybindings are not initialized");
                 return String::new();
             }
